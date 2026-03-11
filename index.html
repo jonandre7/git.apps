@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BAC Estimator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f1a;
+      color: #e8e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      padding: 20px;
+      text-align: center;
+      border-bottom: 1px solid #2a2a4a;
+    }
+
+    header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: 1px; color: #c8b4ff; }
+    header p  { font-size: 0.8rem; color: #7878a0; margin-top: 4px; }
+
+    .container { width: 100%; max-width: 500px; padding: 20px 16px 40px; }
+
+    /* ── Card ── */
+    .card {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .card h2 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #7878a0;
+      margin-bottom: 14px;
+    }
+
+    /* ── Profile ── */
+    .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 0.75rem; color: #9090b8; font-weight: 600; }
+
+    .field input,
+    .field select {
+      background: #0f0f1a;
+      border: 1px solid #2a2a4a;
+      border-radius: 8px;
+      color: #e8e8f0;
+      font-size: 0.95rem;
+      padding: 8px 10px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .field input:focus,
+    .field select:focus { border-color: #8b63e8; }
+    .field select option { background: #1a1a2e; }
+
+    .btn-save {
+      margin-top: 12px;
+      width: 100%;
+      background: #6b3fcb;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-save:hover { background: #7f52e0; }
+
+    .profile-saved-badge {
+      display: none;
+      font-size: 0.75rem;
+      color: #4ade80;
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    /* ── Profile Bar ── */
+    .profile-bar {
+      width: 100%;
+      background: #13132a;
+      border-bottom: 1px solid #2a2a4a;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .profile-bar::-webkit-scrollbar { display: none; }
+
+    .profile-chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 99px;
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      color: #9090b8;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .profile-chip:hover { border-color: #6b3fcb; color: #e8e8f0; }
+    .profile-chip.active { background: #6b3fcb; border-color: #6b3fcb; color: #fff; }
+
+    .profile-chip-new {
+      background: #0f0f1a;
+      border: 1px dashed #3a3a6a;
+      color: #7878a0;
+    }
+
+    .profile-chip-new:hover { border-color: #6b3fcb; color: #c8b4ff; border-style: solid; }
+
+    .chip-del {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.35);
+      cursor: pointer;
+      font-size: 0.65rem;
+      padding: 0 0 0 2px;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+
+    .chip-del:hover { color: #f87171; }
+
+    .profile-name-field { grid-column: 1 / -1; }
+
+    /* ── BAC Gauge ── */
+    .gauge-card {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 16px;
+      padding: 24px 20px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .gauge-card h2 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #7878a0;
+      margin-bottom: 20px;
+    }
+
+    .bac-number {
+      font-size: 4rem;
+      font-weight: 800;
+      line-height: 1;
+      transition: color 0.5s;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .bac-unit { font-size: 0.85rem; color: #7878a0; margin-top: 4px; }
+
+    .bac-bar-wrap {
+      background: #0f0f1a;
+      border-radius: 99px;
+      height: 12px;
+      margin: 16px 0 10px;
+      overflow: hidden;
+    }
+
+    .bac-bar {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.8s ease, background 0.5s;
+      width: 0%;
+    }
+
+    .bac-status { font-size: 0.9rem; font-weight: 600; margin-top: 4px; }
+    .bac-info   { margin-top: 12px; font-size: 0.78rem; color: #6060a0; min-height: 16px; }
+
+    /* ── Elapsed timer ── */
+    .timer-row {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #1e1e3a;
+    }
+
+    .timer-block { text-align: center; }
+
+    .timer-val {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #c8b4ff;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-label { font-size: 0.65rem; color: #5a5a9a; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+    .sober-time {
+      margin-top: 14px;
+      background: #0f0f1a;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 0.8rem;
+      color: #7878a0;
+      display: none;
+    }
+
+    .sober-time span { color: #c8b4ff; font-weight: 600; }
+
+    /* colour states */
+    .state-sober   { color: #4ade80; }
+    .state-low     { color: #a3e635; }
+    .state-tipsy   { color: #d4e635; }
+    .state-medium  { color: #facc15; }
+    .state-drunk   { color: #fba318; }
+    .state-high    { color: #fb923c; }
+    .state-wasted  { color: #f86060; }
+    .state-danger  { color: #f87171; }
+    .state-legend  { color: #e040fb; }
+
+    .bar-sober   { background: #4ade80; }
+    .bar-low     { background: #a3e635; }
+    .bar-tipsy   { background: #d4e635; }
+    .bar-medium  { background: #facc15; }
+    .bar-drunk   { background: #fba318; }
+    .bar-high    { background: #fb923c; }
+    .bar-wasted  { background: #f86060; }
+    .bar-danger  { background: #f87171; }
+    .bar-legend  { background: #e040fb; }
+
+    /* ── Drink Buttons ── */
+    .drink-card { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+    .drink-card h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; color: #7878a0; margin-bottom: 14px; }
+
+    /* Category tabs */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .tab {
+      background: #0f0f1a;
+      border: 1px solid #2a2a4a;
+      border-radius: 99px;
+      color: #7878a0;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .tab.active { background: #6b3fcb; border-color: #6b3fcb; color: #fff; }
+
+    /* Preset grid */
+    .presets-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+
+    .preset-btn {
+      background: #12122a;
+      border: 1px solid #2a2a4a;
+      border-radius: 10px;
+      color: #e8e8f0;
+      cursor: pointer;
+      padding: 10px 10px;
+      text-align: left;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+
+    .preset-btn:active { transform: scale(0.96); }
+    .preset-btn:hover  { background: #1e1e40; border-color: #6b3fcb; }
+
+    .preset-top { font-size: 0.88rem; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .preset-sub { font-size: 0.7rem; color: #6060a0; margin-top: 3px; }
+
+    /* Custom drink button */
+    .btn-custom {
+      width: 100%;
+      background: #0f0f1a;
+      border: 1px dashed #3a3a6a;
+      border-radius: 10px;
+      color: #7878a0;
+      padding: 9px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      margin-bottom: 10px;
+      transition: all 0.15s;
+    }
+
+    .btn-custom:hover { border-color: #6b3fcb; color: #c8b4ff; }
+
+    .btn-clear-all {
+      width: 100%;
+      background: transparent;
+      border: 1px solid #3a1a1a;
+      border-radius: 10px;
+      color: #f87171;
+      padding: 9px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-clear-all:hover { background: #2a1010; }
+
+    /* ── Modal ── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .overlay.active { display: flex; }
+
+    .modal {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 20px;
+      padding: 28px 24px;
+      width: calc(100% - 40px);
+      max-width: 360px;
+    }
+
+    .modal h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+    .modal .field { margin-bottom: 14px; }
+
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+
+    .btn-cancel {
+      flex: 1;
+      background: #0f0f1a;
+      border: 1px solid #2a2a4a;
+      border-radius: 10px;
+      color: #9090b8;
+      padding: 10px;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .btn-add {
+      flex: 2;
+      background: #6b3fcb;
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      padding: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-add:hover { background: #7f52e0; }
+
+    /* ── Log ── */
+    .log-card { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 16px; padding: 20px; }
+    .log-card h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; color: #7878a0; margin-bottom: 12px; }
+
+    .log-empty { text-align: center; color: #5050a0; font-size: 0.85rem; padding: 16px 0; }
+
+    .log-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #1e1e3a;
+    }
+
+    .log-item:last-child { border-bottom: none; }
+
+    .log-icon    { font-size: 1.6rem; width: 36px; text-align: center; }
+    .log-details { flex: 1; }
+    .log-name    { font-size: 0.9rem; font-weight: 600; }
+    .log-meta    { font-size: 0.75rem; color: #7878a0; margin-top: 2px; }
+    .log-grams   { font-size: 0.8rem; color: #a080f0; font-weight: 600; white-space: nowrap; }
+
+    .log-remove {
+      background: none;
+      border: none;
+      color: #3a3a6a;
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+      line-height: 1;
+    }
+
+    .log-remove:hover { color: #f87171; background: #2a1010; }
+
+    .disclaimer {
+      text-align: center;
+      font-size: 0.7rem;
+      color: #3a3a6a;
+      margin-top: 20px;
+      line-height: 1.5;
+      padding: 0 8px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🍷 BAC Estimator</h1>
+    <p>Blood Alcohol Content Calculator</p>
+  </header>
+
+  <!-- Profile bar -->
+  <div class="profile-bar" id="profileBar">
+    <button class="profile-chip profile-chip-new" onclick="newProfile()">+ New</button>
+  </div>
+
+  <div class="container">
+
+    <!-- Profile -->
+    <div class="card" id="profileCard">
+      <h2 id="profileCardTitle">New Profile</h2>
+      <div class="profile-grid">
+        <div class="field profile-name-field">
+          <label>Name</label>
+          <input type="text" id="profileName" placeholder="e.g. Jon" maxlength="20" />
+        </div>
+        <div class="field">
+          <label>Age</label>
+          <input type="number" id="age" placeholder="25" min="18" max="99" />
+        </div>
+        <div class="field">
+          <label>Gender</label>
+          <select id="gender">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Weight (kg)</label>
+          <input type="number" id="weight" placeholder="70" min="30" max="300" />
+        </div>
+        <div class="field">
+          <label>Height (cm)</label>
+          <input type="number" id="height" placeholder="175" min="100" max="250" />
+        </div>
+      </div>
+      <button class="btn-save" onclick="saveProfile()">Save Profile</button>
+      <div class="profile-saved-badge" id="profileBadge">✓ Profile saved</div>
+    </div>
+
+    <!-- BAC Gauge -->
+    <div class="gauge-card">
+      <h2>Current BAC</h2>
+      <div class="bac-number state-sober" id="bacDisplay">0.00‰</div>
+      <div class="bac-unit">Blood Alcohol Content</div>
+      <div class="bac-bar-wrap">
+        <div class="bac-bar bar-sober" id="bacBar"></div>
+      </div>
+      <div class="bac-status state-sober" id="bacStatus">Sober</div>
+      <div class="bac-info" id="bacInfo"></div>
+
+      <!-- Live timer -->
+      <div class="timer-row" id="timerRow" style="display:none">
+        <div class="timer-block">
+          <div class="timer-val" id="timerHours">0</div>
+          <div class="timer-label">Hours</div>
+        </div>
+        <div class="timer-block">
+          <div class="timer-val" id="timerMins">00</div>
+          <div class="timer-label">Minutes</div>
+        </div>
+        <div class="timer-block">
+          <div class="timer-val" id="timerSecs">00</div>
+          <div class="timer-label">Seconds</div>
+        </div>
+      </div>
+
+      <div class="sober-time" id="soberTime">
+        Estimated sober at: <span id="soberAt">—</span>
+      </div>
+    </div>
+
+    <!-- Drink Buttons -->
+    <div class="drink-card">
+      <h2>Add a Drink</h2>
+
+      <!-- Category Tabs -->
+      <div class="tabs">
+        <button class="tab active" onclick="setTab('beer',this)">🍺 Beer</button>
+        <button class="tab" onclick="setTab('wine',this)">🍷 Wine</button>
+        <button class="tab" onclick="setTab('cocktail',this)">🍸 Cocktail</button>
+        <button class="tab" onclick="setTab('shot',this)">🥃 Shot</button>
+      </div>
+
+      <!-- Preset grids (one per category) -->
+      <div id="tab-beer" class="presets-grid">
+        <button class="preset-btn" onclick="addPreset('🍺','Pilsner',50,4.7)">
+          <div class="preset-top">🍺 Pilsner</div>
+          <div class="preset-sub">50 cl · 4.7%</div>
+        </button>
+        <button class="preset-btn" onclick="addPreset('🍺','IPA',50,6.5)">
+          <div class="preset-top">🍺 IPA</div>
+          <div class="preset-sub">50 cl · 6.5%</div>
+        </button>
+        <button class="preset-btn" onclick="addPreset('🍺','Light Beer',33,3.5)">
+          <div class="preset-top">🍺 Light Beer</div>
+          <div class="preset-sub">33 cl · 3.5%</div>
+        </button>
+        <button class="preset-btn" onclick="addPreset('🍺','Strong Beer',50,8.0)">
+          <div class="preset-top">🍺 Strong Beer</div>
+          <div class="preset-sub">50 cl · 8.0%</div>
+        </button>
+      </div>
+
+      <div id="tab-wine" class="presets-grid" style="display:none">
+        <button class="preset-btn" onclick="addPreset('🍷','Red Wine',15,13.5)">
+          <div class="preset-top">🍷 Red Wine</div>
+          <div class="preset-sub">15 cl · 13.5%</div>
+        </button>
+        <button class="preset-btn" onclick="addPreset('🥂','White Wine',15,12.0)">
+          <div class="preset-top">🥂 White Wine</div>
+          <div class="preset-sub">15 cl · 12.0%</div>
+        </button>
+        <button class="preset-btn" onclick="addPreset('🍾','Champagne',12,12.0)">
+          <div class="preset-top">🍾 Champagne</div>
+          <div class="preset-sub">12 cl · 12.0%</div>
+        </button>
+        <button class="preset-btn" onclick="addPreset('🥂','Prosecco',12,11.0)">
+          <div class="preset-top">🥂 Prosecco</div>
+          <div class="preset-sub">12 cl · 11.0%</div>
+        </button>
+      </div>
+
+      <div id="tab-cocktail" class="presets-grid" style="display:none">
+        <button class="preset-btn" onclick="addPreset('🍸','Gin &amp; Tonic',25,8.0)">
+          <div class="preset-top">🍸 Gin &amp; Tonic</div>
+          <div class="preset-sub">25 cl · 8.0%</div>
+        </button>
+        <button class="preset-btn" onclick="addPreset('🍹','Mojito',25,7.5)">
+          <div class="preset-top">🍹 Mojito</div>
+          <div class="preset-sub">25 cl · 7.5%</div>
+        </button>
+        <button class="preset-btn" onclick="addPreset('🍸','Aperol Spritz',20,8.0)">
+          <div class="preset-top">🍸 Aperol Spritz</div>
+          <div class="preset-sub">20 cl · 8.0%</div>
+        </button>
+        <button class="preset-btn" onclick="addPreset('🥤','Vodka Soda',25,9.0)">
+          <div class="preset-top">🥤 Vodka Soda</div>
+          <div class="preset-sub">25 cl · 9.0%</div>
+        </button>
+      </div>
+
+      <div id="tab-shot" class="presets-grid" style="display:none">
+        <button class="preset-btn" onclick="addPreset('🥃','Whisky',4,40.0)">
+          <div class="preset-top">🥃 Whisky</div>
+          <div class="preset-sub">4 cl · 40.0%</div>
+        </button>
+        <button class="preset-btn" onclick="addPreset('🥃','Vodka',4,40.0)">
+          <div class="preset-top">🥃 Vodka</div>
+          <div class="preset-sub">4 cl · 40.0%</div>
+        </button>
+        <button class="preset-btn" onclick="addPreset('🥃','Tequila',4,40.0)">
+          <div class="preset-top">🥃 Tequila</div>
+          <div class="preset-sub">4 cl · 40.0%</div>
+        </button>
+        <button class="preset-btn" onclick="addPreset('🥃','Jäger',4,35.0)">
+          <div class="preset-top">🥃 Jägermeister</div>
+          <div class="preset-sub">4 cl · 35.0%</div>
+        </button>
+      </div>
+
+      <button class="btn-custom" id="customBtn" onclick="openCustomModal()">+ Custom drink</button>
+      <button class="btn-clear-all" onclick="clearAll()">Clear All Drinks</button>
+    </div>
+
+    <!-- Log -->
+    <div class="log-card">
+      <h2>Drink Log</h2>
+      <div class="log-empty" id="logEmpty">No drinks logged yet.</div>
+      <div id="logList"></div>
+    </div>
+
+    <div class="disclaimer">
+      ⚠️ For informational purposes only — not medical or legal advice.
+      Never drink and drive. Actual BAC varies by individual.
+    </div>
+  </div>
+
+  <!-- Custom Drink Modal -->
+  <div class="overlay" id="overlay" onclick="closeModalOutside(event)">
+    <div class="modal">
+      <h3>
+        <span id="modalIcon">🍹</span>
+        <span id="modalTitle">Custom Drink</span>
+      </h3>
+      <div class="field">
+        <label>Amount (centiliters)</label>
+        <input type="number" id="modalCl" placeholder="e.g. 50" min="1" max="300" step="0.5" />
+        <small id="modalClHint" style="font-size:0.72rem;color:#6060a0;margin-top:4px;display:block;"></small>
+      </div>
+      <div class="field">
+        <label>Alcohol percentage (%)</label>
+        <input type="number" id="modalPct" placeholder="e.g. 5" min="0.1" max="100" step="0.1" />
+        <small id="modalPctHint" style="font-size:0.72rem;color:#6060a0;margin-top:4px;display:block;"></small>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-add" onclick="addCustomDrink()">Add Drink</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── State ──────────────────────────────────────────────────────────────────
+    let profile      = null;
+    let drinks       = [];    // { icon, name, cl, pct, gramsAlcohol, time }
+    let tickInterval = null;
+    let activeTab    = 'beer';
+
+    // Icons per tab
+    const TAB_ICONS  = { beer:'🍺', wine:'🍷', cocktail:'🍸', shot:'🥃' };
+    const TAB_HINTS  = {
+      beer:     { cl:'20–50 cl', pct:'3–9%' },
+      wine:     { cl:'10–25 cl', pct:'10–15%' },
+      cocktail: { cl:'15–40 cl', pct:'6–15%' },
+      shot:     { cl:'2–6 cl',   pct:'35–45%' },
+    };
+
+    // ── Multi-profile storage ─────────────────────────────────────────────────
+    // localStorage['bac_profiles'] = JSON array of { id, name, age, gender, weight, height, drinks[] }
+    // localStorage['bac_active']   = active profile id
+
+    let activeProfileId = null;
+
+    function getProfiles() {
+      try { return JSON.parse(localStorage.getItem('bac_profiles')) || []; }
+      catch(e) { return []; }
+    }
+
+    function saveProfiles(arr) {
+      localStorage.setItem('bac_profiles', JSON.stringify(arr));
+    }
+
+    function loadProfiles() {
+      const profiles_arr = getProfiles();
+      const savedActive  = localStorage.getItem('bac_active');
+      const active       = profiles_arr.find(p => p.id === savedActive) || profiles_arr[0];
+      if (active) {
+        activeProfileId = active.id;
+        applyProfile(active);
+      }
+      renderProfileBar();
+    }
+
+    function applyProfile(p) {
+      document.getElementById('profileName').value = p.name   || '';
+      document.getElementById('age').value         = p.age    || '';
+      document.getElementById('weight').value      = p.weight || '';
+      document.getElementById('height').value      = p.height || '';
+      document.getElementById('gender').value      = p.gender || 'male';
+      document.getElementById('profileCardTitle').textContent = p.name || 'Profile';
+      document.getElementById('profileBadge').style.display = 'block';
+      profile = { age: p.age, gender: p.gender, weight: p.weight, height: p.height };
+      drinks  = p.drinks || [];
+      if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
+      if (drinks.length > 0) startTick();
+      renderLog();
+      updateBAC();
+    }
+
+    function saveProfile() {
+      const name   = document.getElementById('profileName').value.trim();
+      const age    = parseFloat(document.getElementById('age').value);
+      const gender = document.getElementById('gender').value;
+      const weight = parseFloat(document.getElementById('weight').value);
+      const height = parseFloat(document.getElementById('height').value);
+
+      if (!name)              { alert('Please enter a name for this profile.'); return; }
+      if (!age || !weight || !height) { alert('Please fill in age, weight and height.'); return; }
+      if (age < 18)           { alert('You must be 18 or older to use this tool.'); return; }
+
+      const arr = getProfiles();
+
+      if (activeProfileId) {
+        // Update existing
+        const idx = arr.findIndex(p => p.id === activeProfileId);
+        if (idx !== -1) {
+          arr[idx] = { ...arr[idx], name, age, gender, weight, height };
+        }
+      } else {
+        // Create new
+        const newP = { id: Date.now().toString(), name, age, gender, weight, height, drinks: [] };
+        arr.push(newP);
+        activeProfileId = newP.id;
+      }
+
+      saveProfiles(arr);
+      localStorage.setItem('bac_active', activeProfileId);
+
+      profile = { age, gender, weight, height };
+      document.getElementById('profileCardTitle').textContent = name;
+      document.getElementById('profileBadge').style.display = 'block';
+
+      renderProfileBar();
+      updateBAC();
+
+      const btn = document.querySelector('.btn-save');
+      btn.textContent = '✓ Saved';
+      btn.style.background = '#2a7a4a';
+      setTimeout(() => { btn.textContent = 'Save Profile'; btn.style.background = ''; }, 1500);
+    }
+
+    function newProfile() {
+      activeProfileId = null;
+      profile = null;
+      drinks  = [];
+      if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
+      document.getElementById('profileName').value = '';
+      document.getElementById('age').value    = '';
+      document.getElementById('weight').value = '';
+      document.getElementById('height').value = '';
+      document.getElementById('gender').value = 'male';
+      document.getElementById('profileCardTitle').textContent = 'New Profile';
+      document.getElementById('profileBadge').style.display = 'none';
+      renderProfileBar();
+      renderLog();
+      updateBAC();
+    }
+
+    function switchProfile(id) {
+      // Persist current drinks before switching
+      persistCurrentDrinks();
+      const arr = getProfiles();
+      const p   = arr.find(x => x.id === id);
+      if (!p) return;
+      activeProfileId = id;
+      localStorage.setItem('bac_active', id);
+      applyProfile(p);
+      renderProfileBar();
+    }
+
+    function deleteProfile(id, e) {
+      e.stopPropagation();
+      const arr = getProfiles();
+      const p   = arr.find(x => x.id === id);
+      if (!confirm(`Delete profile "${p ? p.name : ''}"?`)) return;
+      const newArr = arr.filter(x => x.id !== id);
+      saveProfiles(newArr);
+      if (activeProfileId === id) {
+        if (newArr.length > 0) {
+          switchProfile(newArr[0].id);
+        } else {
+          newProfile();
+        }
+      } else {
+        renderProfileBar();
+      }
+    }
+
+    function persistCurrentDrinks() {
+      if (!activeProfileId) return;
+      const arr = getProfiles();
+      const idx = arr.findIndex(p => p.id === activeProfileId);
+      if (idx !== -1) { arr[idx].drinks = drinks; saveProfiles(arr); }
+    }
+
+    function renderProfileBar() {
+      const bar  = document.getElementById('profileBar');
+      const arr  = getProfiles();
+      const chips = arr.map(p => {
+        const isActive = p.id === activeProfileId;
+        return `<button class="profile-chip${isActive ? ' active' : ''}" onclick="switchProfile('${p.id}')">
+          ${p.name}
+          <span class="chip-del" onclick="deleteProfile('${p.id}', event)" title="Delete">✕</span>
+        </button>`;
+      }).join('');
+      bar.innerHTML = `<button class="profile-chip profile-chip-new" onclick="newProfile()">+ New</button>${chips}`;
+    }
+
+    // ── Tabs ──────────────────────────────────────────────────────────────────
+    function setTab(tab, el) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      ['beer','wine','cocktail','shot'].forEach(t => {
+        document.getElementById('tab-' + t).style.display = t === tab ? 'grid' : 'none';
+      });
+      activeTab = tab;
+    }
+
+    // ── Presets ────────────────────────────────────────────────────────────────
+    function addPreset(icon, name, cl, pct) {
+      if (!profile) { alert('Please fill in your profile first.'); return; }
+      addDrinkEntry(icon, name, cl, pct);
+    }
+
+    // ── Custom Modal ───────────────────────────────────────────────────────────
+    function openCustomModal() {
+      const icon  = TAB_ICONS[activeTab];
+      const hints = TAB_HINTS[activeTab];
+      document.getElementById('modalIcon').textContent   = icon;
+      document.getElementById('modalTitle').textContent  = 'Custom ' + activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
+      document.getElementById('modalCl').value  = '';
+      document.getElementById('modalPct').value = '';
+      document.getElementById('modalClHint').textContent  = 'Typical: ' + hints.cl;
+      document.getElementById('modalPctHint').textContent = 'Typical ABV: ' + hints.pct;
+      document.getElementById('overlay').classList.add('active');
+      setTimeout(() => document.getElementById('modalCl').focus(), 100);
+    }
+
+    function closeModal() { document.getElementById('overlay').classList.remove('active'); }
+
+    function closeModalOutside(e) {
+      if (e.target === document.getElementById('overlay')) closeModal();
+    }
+
+    function addCustomDrink() {
+      if (!profile) { alert('Please fill in your profile first.'); closeModal(); return; }
+      const cl  = parseFloat(document.getElementById('modalCl').value);
+      const pct = parseFloat(document.getElementById('modalPct').value);
+      if (!cl  || cl  <= 0)   { alert('Please enter a valid amount.'); return; }
+      if (!pct || pct <= 0)   { alert('Please enter a valid percentage.'); return; }
+      if (pct > 100)          { alert('Percentage cannot exceed 100%.'); return; }
+      const icon = TAB_ICONS[activeTab];
+      const name = 'Custom ' + activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
+      addDrinkEntry(icon, name, cl, pct);
+      closeModal();
+    }
+
+    // ── Add Drink ─────────────────────────────────────────────────────────────
+    function addDrinkEntry(icon, name, cl, pct) {
+      const ml           = cl * 10;
+      const gramsAlcohol = ml * (pct / 100) * 0.789;
+
+      drinks.push({ icon, name, cl, pct, gramsAlcohol, time: Date.now() });
+      persistCurrentDrinks();
+      renderLog();
+      updateBAC();
+      startTick();
+    }
+
+    // ── BAC (Widmark) ─────────────────────────────────────────────────────────
+    // r: 0.68 male / 0.55 female
+    // BAC‰ = (g_alcohol / (weight_kg × 1000 × r)) × 1000
+    // Metabolism: 0.15‰ / hour
+    function computeBAC(nowMs) {
+      if (!profile || drinks.length === 0) return 0;
+      const r = profile.gender === 'male' ? 0.68 : 0.55;
+      let total = 0;
+      for (const d of drinks) {
+        const hoursElapsed = (nowMs - d.time) / 3_600_000;
+        const raw          = (d.gramsAlcohol / (profile.weight * 1000 * r)) * 1000;
+        total += Math.max(0, raw - 0.15 * hoursElapsed);
+      }
+      return Math.max(0, total);
+    }
+
+    function updateBAC() {
+      const now = Date.now();
+      const bac = computeBAC(now);
+
+      const display = document.getElementById('bacDisplay');
+      const bar     = document.getElementById('bacBar');
+      const status  = document.getElementById('bacStatus');
+      const info    = document.getElementById('bacInfo');
+
+      display.textContent = bac.toFixed(2) + '‰';
+
+      const pct = Math.min(100, (bac / 2.0) * 100);
+      bar.style.width = pct + '%';
+
+      let state, label, infoText;
+      if (bac < 0.01) {
+        state = 'sober';
+        label = 'Stone Cold Sober';
+        infoText = profile ? 'Completely unimpaired. Your liver respects you. For now.' : 'Fill in your profile to start.';
+      } else if (bac < 0.15) {
+        state = 'low';
+        label = 'Warming Up';
+        infoText = 'Confidence slightly elevated. You\'ve made eye contact with a stranger and held it a second too long.';
+      } else if (bac < 0.30) {
+        state = 'low';
+        label = 'Socially Lubricated';
+        infoText = 'Your jokes have gotten funnier. (They haven\'t.) ADVISORY: Unsolicited opinions entering bloodstream.';
+      } else if (bac < 0.45) {
+        state = 'tipsy';
+        label = 'Officially Tipsy';
+        infoText = 'You just said "no but seriously, listen to me" for the third time. Nobody is listening.';
+      } else if (bac < 0.60) {
+        state = 'medium';
+        label = 'Nicely Buzzed';
+        infoText = 'CAUTION: Dance floor confidence at 340% capacity. Reaction time at 60%. Vibes at 110%.';
+      } else if (bac < 0.80) {
+        state = 'drunk';
+        label = 'Properly Drunk';
+        infoText = 'You just told a complete stranger your life story. They didn\'t ask. Your liver has filed a formal complaint.';
+      } else if (bac < 1.00) {
+        state = 'high';
+        label = 'Fully Loaded';
+        infoText = 'Ready to fuck! Speech: slurred. Balance: theoretical. You\'re negotiating with a chair. Do NOT drive.';
+      } else if (bac < 1.30) {
+        state = 'wasted';
+        label = 'Certified Disaster';
+        infoText = '⚠️ SYSTEM ALERT: Coordination offline. Dignity in critical condition. Your future self is already embarrassed. Seek a friend.';
+      } else if (bac < 1.60) {
+        state = 'danger';
+        label = 'Danger Zone';
+        infoText = '🚨 Scientists are baffled you\'re still upright. Your liver has quit and left a strongly-worded letter. Get help immediately.';
+      } else {
+        state = 'legend';
+        label = '☠️ LEGENDARY';
+        infoText = '🆘 Impossible to fuck now anyways so just keep going! Body: offline. Brain: screaming from a distance. No, seriously — call someone NOW.';
+      }
+
+      display.className = `bac-number state-${state}`;
+      bar.className     = `bac-bar bar-${state}`;
+      status.className  = `bac-status state-${state}`;
+      status.textContent = label;
+      info.textContent   = infoText;
+
+      updateTimer(now);
+      updateSoberTime(bac);
+    }
+
+    // ── Elapsed timer ─────────────────────────────────────────────────────────
+    function updateTimer(now) {
+      const row = document.getElementById('timerRow');
+      if (drinks.length === 0) { row.style.display = 'none'; return; }
+
+      const firstDrink = drinks[0].time;
+      const elapsed    = now - firstDrink;
+      const totalSecs  = Math.floor(elapsed / 1000);
+      const hrs        = Math.floor(totalSecs / 3600);
+      const mins       = Math.floor((totalSecs % 3600) / 60);
+      const secs       = totalSecs % 60;
+
+      document.getElementById('timerHours').textContent = hrs;
+      document.getElementById('timerMins').textContent  = mins.toString().padStart(2,'0');
+      document.getElementById('timerSecs').textContent  = secs.toString().padStart(2,'0');
+      row.style.display = 'flex';
+    }
+
+    // ── Sober time ────────────────────────────────────────────────────────────
+    function updateSoberTime(bac) {
+      const el = document.getElementById('soberTime');
+      if (bac <= 0.005 || drinks.length === 0) { el.style.display = 'none'; return; }
+      const hoursLeft = bac / 0.15;
+      const soberDate = new Date(Date.now() + hoursLeft * 3_600_000);
+      const h    = soberDate.getHours().toString().padStart(2,'0');
+      const m    = soberDate.getMinutes().toString().padStart(2,'0');
+      const isToday = soberDate.toDateString() === new Date().toDateString();
+      document.getElementById('soberAt').textContent = `${isToday ? 'Today' : 'Tomorrow'} at ${h}:${m}`;
+      el.style.display = 'block';
+    }
+
+    // ── Live tick (every second) ───────────────────────────────────────────────
+    function startTick() {
+      if (tickInterval) return;
+      tickInterval = setInterval(() => {
+        updateBAC();
+        if (computeBAC(Date.now()) < 0.005 && drinks.length > 0) {
+          clearInterval(tickInterval);
+          tickInterval = null;
+          document.getElementById('timerRow').style.display = 'none';
+        }
+      }, 1000);
+    }
+
+    // ── Log ───────────────────────────────────────────────────────────────────
+    function removeDrink(index) {
+      drinks.splice(index, 1);
+      if (drinks.length === 0 && tickInterval) {
+        clearInterval(tickInterval);
+        tickInterval = null;
+      }
+      persistCurrentDrinks();
+      renderLog();
+      updateBAC();
+    }
+
+    function renderLog() {
+      const list  = document.getElementById('logList');
+      const empty = document.getElementById('logEmpty');
+
+      if (drinks.length === 0) { empty.style.display = 'block'; list.innerHTML = ''; return; }
+
+      empty.style.display = 'none';
+      list.innerHTML = drinks.map((d, i) => {
+        const t = new Date(d.time);
+        const ts = `${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}`;
+        return `
+          <div class="log-item">
+            <div class="log-icon">${d.icon}</div>
+            <div class="log-details">
+              <div class="log-name">${d.name}</div>
+              <div class="log-meta">${d.cl} cl · ${d.pct}% ABV · ${ts}</div>
+            </div>
+            <div class="log-grams">${d.gramsAlcohol.toFixed(1)} g</div>
+            <button class="log-remove" onclick="removeDrink(${i})" title="Remove">✕</button>
+          </div>`;
+      }).join('');
+    }
+
+    function clearAll() {
+      if (drinks.length === 0) return;
+      if (!confirm('Clear all logged drinks?')) return;
+      drinks = [];
+      if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
+      persistCurrentDrinks();
+      renderLog();
+      updateBAC();
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    loadProfiles();
+    updateBAC();
+  </script>
+</body>
+</html>
