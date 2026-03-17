@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Joker Counter</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red: #c8102e;
+      --black: #1a1a2e;
+      --gold: #d4af37;
+      --gold-light: #f0d060;
+      --card-bg: #fdf6e3;
+      --card-shadow: 0 8px 32px rgba(0,0,0,0.55);
+      --pip-red: #c8102e;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(ellipse at 50% 0%, #2d1b4e 0%, #1a1a2e 60%, #0a0a14 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 16px 32px;
+      font-family: 'Cinzel', serif;
+      overflow-x: hidden;
+    }
+
+    /* === HEADER === */
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+      position: relative;
+    }
+
+    .header-pips {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 8px;
+    }
+
+    .pip {
+      font-size: 28px;
+      line-height: 1;
+      filter: drop-shadow(0 2px 6px rgba(200,16,46,0.7));
+    }
+
+    .pip.black { color: #e8e8e8; filter: drop-shadow(0 2px 6px rgba(255,255,255,0.3)); }
+    .pip.red   { color: var(--red); }
+
+    h1 {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(1.6rem, 5vw, 2.8rem);
+      color: var(--gold);
+      text-shadow: 0 0 20px rgba(212,175,55,0.6), 0 2px 4px rgba(0,0,0,0.8);
+      letter-spacing: 0.05em;
+      line-height: 1.1;
+    }
+
+    h1 span {
+      color: var(--red);
+      text-shadow: 0 0 20px rgba(200,16,46,0.6), 0 2px 4px rgba(0,0,0,0.8);
+    }
+
+    .subtitle {
+      font-size: 0.75rem;
+      color: rgba(212,175,55,0.5);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* === GRID === */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      width: 100%;
+      max-width: 700px;
+    }
+
+    @media (max-width: 420px) {
+      .grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    }
+
+    /* === CARD === */
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      border: 2px solid var(--gold);
+      box-shadow: var(--card-shadow), inset 0 0 0 1px rgba(212,175,55,0.15);
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+      overflow: hidden;
+      aspect-ratio: 2 / 3;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card:active {
+      transform: scale(0.96);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(212,175,55,0.15);
+    }
+
+    .card:has(.name-wrap:active) {
+      transform: none;
+      box-shadow: var(--card-shadow), inset 0 0 0 1px rgba(212,175,55,0.15);
+    }
+
+    .card:has(.name-wrap:active) .joker-face {
+      transform: none;
+    }
+
+    /* Card background pattern */
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 12px,
+          rgba(212,175,55,0.04) 12px,
+          rgba(212,175,55,0.04) 13px
+        );
+      pointer-events: none;
+    }
+
+    /* === CORNER PIPS === */
+    .corner {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    .corner.tl { top: 6px; left: 8px; }
+    .corner.br { bottom: 6px; right: 8px; transform: rotate(180deg); }
+
+    .corner .suit-letter {
+      font-size: clamp(0.65rem, 2vw, 0.85rem);
+      font-weight: 700;
+      font-family: 'Cinzel', serif;
+      color: var(--red);
+      letter-spacing: 0;
+    }
+
+    .corner .suit-icon {
+      font-size: clamp(0.7rem, 2vw, 0.9rem);
+      color: var(--red);
+    }
+
+    .corner .suit-letter.black,
+    .corner .suit-icon.black {
+      color: var(--black);
+    }
+
+    /* === NAME AREA === */
+    .name-wrap {
+      padding: 28px 16px 14px;
+      display: flex;
+      justify-content: center;
+      pointer-events: all;
+    }
+
+    .player-name {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(0.65rem, 2.5vw, 0.9rem);
+      font-weight: 700;
+      color: var(--black);
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px dashed rgba(26,26,46,0.3);
+      text-align: center;
+      width: 100%;
+      max-width: 120px;
+      outline: none;
+      padding: 2px 4px;
+      cursor: text;
+      pointer-events: all;
+      transition: border-color 0.2s;
+      caret-color: var(--red);
+    }
+
+    .player-name:focus {
+      border-bottom-color: var(--red);
+    }
+
+    /* === CENTER JOKER FACE === */
+    .joker-center {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .joker-face {
+      font-size: clamp(2.8rem, 10vw, 5rem);
+      line-height: 1;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+      transition: transform 0.15s ease;
+    }
+
+    .card:active .joker-face {
+      transform: scale(1.15);
+    }
+
+    /* === COUNT DISPLAY === */
+    .count-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: 10px;
+      pointer-events: none;
+    }
+
+    .count-label {
+      font-size: clamp(0.45rem, 1.5vw, 0.6rem);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(26,26,46,0.45);
+      margin-bottom: 2px;
+    }
+
+    .count-number {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(1.8rem, 7vw, 3.2rem);
+      font-weight: 900;
+      color: var(--red);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+      line-height: 1;
+      transition: transform 0.1s ease;
+    }
+
+    .count-number.bump {
+      animation: bump 0.18s ease;
+    }
+
+    @keyframes bump {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.35); }
+      100% { transform: scale(1); }
+    }
+
+    /* === UNDO BUTTON === */
+    .undo-btn {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(26,26,46,0.2);
+      background: rgba(255,255,255,0.7);
+      color: rgba(26,26,46,0.5);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      pointer-events: all;
+      z-index: 10;
+    }
+
+    .undo-btn:hover {
+      background: var(--red);
+      color: #fff;
+      border-color: var(--red);
+    }
+
+    .undo-btn:disabled {
+      opacity: 0.25;
+      cursor: default;
+    }
+
+    /* === BOTTOM BUTTONS === */
+    .new-game-wrap {
+      margin-top: 24px;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .new-game-btn {
+      background: linear-gradient(135deg, #2d1b4e 0%, #1a1a2e 100%);
+      color: var(--gold);
+      border: 2px solid var(--gold);
+      border-radius: 50px;
+      padding: 12px 28px;
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(0.7rem, 2.2vw, 0.9rem);
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4), 0 0 20px rgba(212,175,55,0.15);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.2s;
+    }
+
+    .new-game-btn:hover {
+      background: linear-gradient(135deg, #3d2b5e 0%, #2a2a4e 100%);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 0 30px rgba(212,175,55,0.25);
+    }
+
+    .new-game-btn:active { transform: scale(0.96); }
+
+    .reset-jokers-btn {
+      background: transparent;
+      color: rgba(212,175,55,0.75);
+      border: 2px solid rgba(212,175,55,0.4);
+      border-radius: 50px;
+      padding: 12px 28px;
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(0.7rem, 2.2vw, 0.9rem);
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: transform 0.12s ease, border-color 0.2s, color 0.2s;
+    }
+
+    .reset-jokers-btn:hover {
+      border-color: rgba(212,175,55,0.8);
+      color: var(--gold);
+    }
+
+    .reset-jokers-btn:active { transform: scale(0.96); }
+
+    /* === MODAL === */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.show { display: flex; }
+
+    .modal {
+      background: var(--card-bg);
+      border: 2px solid var(--gold);
+      border-radius: 16px;
+      padding: 32px 28px;
+      text-align: center;
+      max-width: 320px;
+      width: 90%;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+    }
+
+    .modal h2 {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 1.3rem;
+      color: var(--black);
+      margin-bottom: 8px;
+    }
+
+    .modal p {
+      font-size: 0.85rem;
+      color: rgba(26,26,46,0.6);
+      margin-bottom: 24px;
+      font-family: 'Cinzel', serif;
+    }
+
+    .modal-emoji { font-size: 2.5rem; margin-bottom: 12px; }
+
+    .modal-buttons { display: flex; gap: 12px; justify-content: center; }
+
+    .btn-cancel {
+      padding: 10px 24px;
+      border-radius: 50px;
+      border: 1.5px solid rgba(26,26,46,0.3);
+      background: transparent;
+      color: rgba(26,26,46,0.7);
+      font-family: 'Cinzel', serif;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .btn-confirm {
+      padding: 10px 24px;
+      border-radius: 50px;
+      border: none;
+      background: var(--red);
+      color: #fff;
+      font-family: 'Cinzel', serif;
+      font-size: 0.85rem;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(200,16,46,0.4);
+    }
+
+    /* === FOOTER SUITS === */
+    .footer-suits {
+      margin-top: 20px;
+      display: flex;
+      gap: 18px;
+      opacity: 0.3;
+    }
+
+    .footer-suits span {
+      font-size: 20px;
+      color: var(--gold);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-pips">
+      <span class="pip red">♥</span>
+      <span class="pip black">♠</span>
+      <span class="pip red">🃏</span>
+      <span class="pip black">♣</span>
+      <span class="pip red">♦</span>
+    </div>
+    <h1>Joker <span>Counter</span></h1>
+    <p class="subtitle">Tap a card to score a joker</p>
+  </header>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="new-game-wrap">
+    <button class="new-game-btn" onclick="confirmAction('newgame')">✦ New Game ✦</button>
+    <button class="reset-jokers-btn" onclick="confirmAction('resetjokers')">↺ Reset Jokers</button>
+  </div>
+
+  <div class="footer-suits">
+    <span>♠</span><span>♥</span><span>♣</span><span>♦</span>
+  </div>
+
+  <!-- Confirm modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-emoji">🃏</div>
+      <h2 id="modal-title">New Game?</h2>
+      <p id="modal-desc">Reset all joker counts to zero?</p>
+      <div class="modal-buttons">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-confirm" onclick="executeAction()">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_NAMES = ['Player 1', 'Player 2', 'Player 3', 'Player 4'];
+    const SUITS = ['♥', '♠', '♣', '♦'];
+    const SUIT_CLASSES = ['red', 'black', 'black', 'red'];
+
+    let counts = [0, 0, 0, 0];
+    let names = [...DEFAULT_NAMES];
+
+    function buildGrid() {
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+
+      counts.forEach((count, i) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.id = `card-${i}`;
+
+        const suit = SUITS[i];
+        const suitClass = SUIT_CLASSES[i];
+
+        card.innerHTML = `
+          <div class="corner tl">
+            <span class="suit-letter ${suitClass}">J</span>
+            <span class="suit-icon ${suitClass}">${suit}</span>
+          </div>
+          <div class="corner br">
+            <span class="suit-letter ${suitClass}">J</span>
+            <span class="suit-icon ${suitClass}">${suit}</span>
+          </div>
+          <div class="name-wrap">
+            <input
+              class="player-name"
+              type="text"
+              value="${names[i]}"
+              maxlength="14"
+              data-index="${i}"
+            />
+          </div>
+          <div class="joker-center">
+            <span class="joker-face">🃏</span>
+          </div>
+          <div class="count-area">
+            <span class="count-label">Jokers</span>
+            <span class="count-number" id="count-${i}">${count}</span>
+          </div>
+          <button class="undo-btn" title="Undo last joker" data-index="${i}" ${count === 0 ? 'disabled' : ''}>↩</button>
+        `;
+
+        // Card tap → increment (but not on name area or undo button)
+        card.addEventListener('click', (e) => {
+          if (
+            e.target.closest('.name-wrap') ||
+            e.target.classList.contains('undo-btn')
+          ) return;
+          incrementCount(i);
+        });
+
+        // Name input → save name
+        const nameInput = card.querySelector('.player-name');
+        nameInput.addEventListener('change', () => {
+          names[i] = nameInput.value.trim() || DEFAULT_NAMES[i];
+          nameInput.value = names[i];
+        });
+
+        // Stop name click from bubbling to card
+        nameInput.addEventListener('click', (e) => e.stopPropagation());
+
+        // Undo button
+        const undoBtn = card.querySelector('.undo-btn');
+        undoBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (counts[i] > 0) {
+            counts[i]--;
+            updateCount(i);
+          }
+        });
+
+        grid.appendChild(card);
+      });
+    }
+
+    function incrementCount(i) {
+      counts[i]++;
+      updateCount(i);
+    }
+
+    function updateCount(i) {
+      const el = document.getElementById(`count-${i}`);
+      el.textContent = counts[i];
+
+      // bump animation
+      el.classList.remove('bump');
+      void el.offsetWidth; // reflow
+      el.classList.add('bump');
+
+      // undo button state
+      const undoBtn = document.querySelector(`.undo-btn[data-index="${i}"]`);
+      if (undoBtn) undoBtn.disabled = counts[i] === 0;
+    }
+
+    let pendingAction = null;
+
+    function confirmAction(action) {
+      pendingAction = action;
+      if (action === 'newgame') {
+        document.getElementById('modal-title').textContent = 'New Game?';
+        document.getElementById('modal-desc').textContent = 'Reset all names and joker counts?';
+      } else {
+        document.getElementById('modal-title').textContent = 'Reset Jokers?';
+        document.getElementById('modal-desc').textContent = 'Reset all joker counts to zero?';
+      }
+      document.getElementById('modal').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('show');
+      pendingAction = null;
+    }
+
+    function executeAction() {
+      counts = [0, 0, 0, 0];
+      if (pendingAction === 'newgame') {
+        names = [...DEFAULT_NAMES];
+      }
+      closeModal();
+      buildGrid();
+    }
+
+    // Close modal on overlay click
+    document.getElementById('modal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+
+    buildGrid();
+  </script>
+</body>
+</html>
