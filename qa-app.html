@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spørsmålsboksen</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #ff6ec7 0%, #ffdd59 40%, #4ecdc4 80%, #a855f7 100%);
+      background-size: 400% 400%;
+      animation: gradientShift 8s ease infinite;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Nunito', sans-serif;
+      padding: 2rem;
+    }
+
+    @keyframes gradientShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 2rem;
+      padding: 2.5rem 3rem;
+      max-width: 620px;
+      width: 100%;
+      box-shadow: 8px 8px 0 #ff6ec7, 16px 16px 0 #a855f7;
+      position: relative;
+    }
+
+    h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.4rem;
+      text-align: center;
+      background: linear-gradient(90deg, #ff6ec7, #a855f7, #4ecdc4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.3rem;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #888;
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+
+    label {
+      display: block;
+      font-weight: 900;
+      font-size: 1.05rem;
+      color: #444;
+      margin-bottom: 0.5rem;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 0.6rem;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 0.85rem 1.2rem;
+      border: 3px solid #a855f7;
+      border-radius: 1rem;
+      font-size: 1rem;
+      font-family: 'Nunito', sans-serif;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      color: #333;
+    }
+
+    input[type="text"]:focus {
+      border-color: #ff6ec7;
+      box-shadow: 0 0 0 3px rgba(255, 110, 199, 0.2);
+    }
+
+    button {
+      padding: 0.85rem 1.4rem;
+      background: linear-gradient(135deg, #a855f7, #ff6ec7);
+      color: white;
+      border: none;
+      border-radius: 1rem;
+      font-size: 1rem;
+      font-family: 'Fredoka One', cursive;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 3px 3px 0 #7c3aed;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 5px 5px 0 #7c3aed;
+    }
+
+    button:active {
+      transform: translate(1px, 1px);
+      box-shadow: 1px 1px 0 #7c3aed;
+    }
+
+    .answer-box {
+      margin-top: 2rem;
+      display: none;
+    }
+
+    .answer-box.visible {
+      display: block;
+      animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.7); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .answer-label {
+      font-weight: 900;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #a855f7;
+      margin-bottom: 0.5rem;
+    }
+
+    .answer-text {
+      background: linear-gradient(135deg, #fff0fa, #f0e8ff);
+      border: 3px dashed #ff6ec7;
+      border-radius: 1rem;
+      padding: 1.2rem 1.5rem;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #333;
+      line-height: 1.4;
+    }
+
+    .answer-text.unknown {
+      background: linear-gradient(135deg, #fff8e1, #ffe0b2);
+      border-color: #ff9800;
+      color: #555;
+      font-style: italic;
+    }
+
+    .wiggle {
+      display: inline-block;
+      animation: wiggle 0.5s ease;
+    }
+
+    @keyframes wiggle {
+      0%  { transform: rotate(0deg); }
+      20% { transform: rotate(-5deg); }
+      40% { transform: rotate(5deg); }
+      60% { transform: rotate(-4deg); }
+      80% { transform: rotate(4deg); }
+      100%{ transform: rotate(0deg); }
+    }
+
+    .stars {
+      position: absolute;
+      top: -1rem;
+      right: 1.5rem;
+      font-size: 1.8rem;
+      animation: spin 4s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="stars">✦</div>
+    <h1>Spørsmålsboksen</h1>
+    <p class="subtitle">Still et spørsmål. Vi har svaret. (Kanskje.)</p>
+
+    <label for="question">Ditt spørsmål:</label>
+    <div class="input-row">
+      <input type="text" id="question" placeholder="F.eks. hvor mye veier..." autocomplete="off" />
+      <button onclick="askQuestion()">Spør!</button>
+    </div>
+
+    <div class="answer-box" id="answerBox">
+      <div class="answer-label">Svaret er:</div>
+      <div class="answer-text" id="answerText"></div>
+    </div>
+  </div>
+
+  <script>
+    const qa = [
+      {
+        keywords: ["vendela", "kirsebom", "veier", "veie", "tung", "vekt", "kilo"],
+        required: ["kirsebom"],
+        answer: "en enormt stor tønne med Kirsebær 🍒"
+      }
+    ];
+
+    function normalize(str) {
+      return str
+        .toLowerCase()
+        .replace(/[^\wæøå\s]/gi, '')
+        .split(/\s+/)
+        .filter(Boolean);
+    }
+
+    function fuzzyMatch(input) {
+      const inputWords = normalize(input);
+
+      for (const item of qa) {
+        const hasRequired = item.required.every(req =>
+          inputWords.some(w => w.includes(req) || req.includes(w))
+        );
+        if (!hasRequired) continue;
+
+        const matchCount = item.keywords.filter(kw =>
+          inputWords.some(w => w.includes(kw) || kw.includes(w))
+        ).length;
+
+        const ratio = matchCount / item.keywords.length;
+        if (ratio >= 0.25) return item.answer;
+      }
+
+      return null;
+    }
+
+    function askQuestion() {
+      const input = document.getElementById('question').value.trim();
+      const answerBox = document.getElementById('answerBox');
+      const answerText = document.getElementById('answerText');
+
+      if (!input) return;
+
+      const match = fuzzyMatch(input);
+      answerBox.classList.remove('visible');
+
+      setTimeout(() => {
+        if (match) {
+          answerText.textContent = match;
+          answerText.classList.remove('unknown');
+        } else {
+          answerText.textContent = '🤷 Hmm... det vet ikke engang vi. Prøv et smartere spørsmål!';
+          answerText.classList.add('unknown');
+        }
+        answerBox.classList.add('visible');
+      }, 50);
+    }
+
+    document.getElementById('question').addEventListener('keydown', e => {
+      if (e.key === 'Enter') askQuestion();
+    });
+  </script>
+</body>
+</html>
