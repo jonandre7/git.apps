@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantastiske Mia</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Nunito', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Background */
+        .bg {
+            position: fixed;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            z-index: -2;
+            transition: background-image 1s ease;
+        }
+
+        .bg-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(
+                160deg,
+                rgba(90, 30, 80, 0.55) 0%,
+                rgba(20, 10, 50, 0.45) 50%,
+                rgba(60, 10, 40, 0.60) 100%
+            );
+            z-index: -1;
+        }
+
+        /* Floating particles */
+        .particles {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            bottom: -60px;
+            opacity: 0;
+            animation: floatUp linear infinite;
+        }
+
+        @keyframes floatUp {
+            0%   { transform: translateY(0) rotate(0deg) scale(0.8); opacity: 0; }
+            10%  { opacity: 0.7; }
+            90%  { opacity: 0.4; }
+            100% { transform: translateY(-110vh) rotate(720deg) scale(1.2); opacity: 0; }
+        }
+
+        /* Layout */
+        .container {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1.5rem;
+            gap: 1.8rem;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            color: white;
+        }
+
+        .crown {
+            font-size: 2.5rem;
+            display: block;
+            margin-bottom: 0.4rem;
+            filter: drop-shadow(0 0 12px rgba(255, 200, 100, 0.8));
+            animation: crownPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes crownPulse {
+            0%, 100% { transform: scale(1) rotate(-3deg); }
+            50%       { transform: scale(1.1) rotate(3deg); }
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.4rem, 9vw, 5.5rem);
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-shadow: 0 3px 20px rgba(0,0,0,0.6), 0 0 60px rgba(255,180,200,0.3);
+            background: linear-gradient(135deg, #fff 0%, #ffd6e8 40%, #ffb6d9 70%, #fff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+        }
+
+        .subtitle {
+            color: rgba(255,220,240,0.85);
+            font-size: 0.95rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+            font-weight: 300;
+        }
+
+        /* Card */
+        .card {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 28px;
+            padding: 2.5rem 2rem;
+            max-width: 680px;
+            width: 100%;
+            box-shadow:
+                0 8px 32px rgba(0,0,0,0.25),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+            text-align: center;
+        }
+
+        /* Date navigation */
+        .date-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .nav-btn {
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.35);
+            color: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.32);
+            transform: scale(1.12);
+        }
+
+        .nav-btn:active { transform: scale(0.95); }
+
+        .date-center { text-align: center; }
+
+        .date-display {
+            color: white;
+            font-size: 1.05rem;
+            font-weight: 600;
+            text-shadow: 0 1px 6px rgba(0,0,0,0.5);
+            cursor: pointer;
+            border-bottom: 1px dashed rgba(255,255,255,0.45);
+            padding-bottom: 2px;
+            display: inline-block;
+            transition: color 0.2s;
+        }
+
+        .date-display:hover { color: #ffd6e8; }
+
+        #datePicker {
+            display: none;
+            background: rgba(255,255,255,0.92);
+            border: none;
+            border-radius: 10px;
+            padding: 0.4rem 0.6rem;
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.95rem;
+            color: #333;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .today-btn {
+            display: none;
+            margin-top: 0.4rem;
+            background: none;
+            border: none;
+            color: rgba(255,220,240,0.75);
+            font-size: 0.78rem;
+            font-family: 'Nunito', sans-serif;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+        }
+
+        .today-btn:hover { color: white; text-decoration: underline; }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,200,220,0.4), transparent);
+            margin-bottom: 2rem;
+        }
+
+        /* Affirmation */
+        .affirmation-wrapper {
+            min-height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .affirmation {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.15rem, 3.5vw, 1.65rem);
+            font-style: italic;
+            color: white;
+            line-height: 1.8;
+            text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+
+        .affirmation.visible { opacity: 1; }
+
+        .quote-mark {
+            font-family: 'Playfair Display', serif;
+            font-size: 4rem;
+            line-height: 0;
+            vertical-align: -1.2rem;
+            color: rgba(255,180,210,0.5);
+            margin-right: 0.1em;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .loading-dots span {
+            width: 10px;
+            height: 10px;
+            background: rgba(255,200,220,0.8);
+            border-radius: 50%;
+            animation: bounce 1.4s ease-in-out infinite;
+        }
+
+        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+            40% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .loading-text {
+            color: rgba(255,220,240,0.75);
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* Error */
+        .error-box {
+            color: rgba(255,200,200,0.9);
+            text-align: center;
+        }
+
+        .error-box .error-icon { font-size: 2.5rem; margin-bottom: 0.6rem; }
+        .error-box .error-msg { font-size: 0.85rem; opacity: 0.75; margin-top: 0.4rem; }
+
+        /* Setup screen */
+        .setup-screen { text-align: center; }
+
+        .setup-screen h2 {
+            font-family: 'Playfair Display', serif;
+            color: white;
+            font-size: 1.5rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .setup-screen p {
+            color: rgba(255,220,240,0.8);
+            font-size: 0.9rem;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .api-input {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.12);
+            color: white;
+            font-size: 0.9rem;
+            font-family: 'Nunito', sans-serif;
+            margin-bottom: 1.2rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .api-input:focus { border-color: rgba(255,180,210,0.7); }
+        .api-input::placeholder { color: rgba(255,255,255,0.4); }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, rgba(220,100,160,0.5), rgba(160,60,120,0.5));
+            border: 1px solid rgba(255,150,200,0.4);
+            color: white;
+            padding: 0.85rem 2.2rem;
+            border-radius: 14px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, rgba(230,120,175,0.65), rgba(175,75,140,0.65));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(200,80,140,0.3);
+        }
+
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-small {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: rgba(255,220,240,0.9);
+            padding: 0.5rem 1.2rem;
+            border-radius: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 1rem;
+        }
+
+        .btn-small:hover { background: rgba(255,255,255,0.25); color: white; }
+
+        /* Settings */
+        .settings-btn {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            color: white;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        .settings-btn:hover {
+            background: rgba(255,255,255,0.28);
+            transform: rotate(30deg) scale(1.1);
+        }
+
+        /* Footer glow line */
+        .card::before {
+            content: '';
+            display: block;
+            position: absolute;
+            top: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,180,220,0.6), transparent);
+            border-radius: 50%;
+        }
+
+        .card { position: relative; }
+
+        /* Mobile */
+        @media (max-width: 480px) {
+            .card { padding: 2rem 1.5rem; }
+            .nav-btn { width: 38px; height: 38px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg" id="bg"></div>
+    <div class="bg-overlay"></div>
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <header>
+            <span class="crown">👑</span>
+            <h1>Fantastiske Mia</h1>
+            <p class="subtitle">En setning bare til deg</p>
+        </header>
+
+        <div class="card" id="mainCard"></div>
+    </div>
+
+    <button class="settings-btn" id="settingsBtn" title="Innstillinger">⚙️</button>
+
+    <script>
+    (() => {
+        const DAYS_NO   = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
+        const MONTHS_NO = ['januar','februar','mars','april','mai','juni','juli','august',
+                           'september','oktober','november','desember'];
+
+        const PARTICLES = ['💕','✨','🌸','💫','⭐','🌺','💝','🦋','🌷','🌟'];
+
+        // ── Helpers ──────────────────────────────────────────────────────────
+        function toISO(d) { return d.toISOString().split('T')[0]; }
+
+        function fromISO(s) {
+            const [y,m,d] = s.split('-').map(Number);
+            return new Date(y, m-1, d);
+        }
+
+        function fmtDate(d) {
+            return `${DAYS_NO[d.getDay()]}, ${d.getDate()}. ${MONTHS_NO[d.getMonth()]} ${d.getFullYear()}`;
+        }
+
+        // ── Background ───────────────────────────────────────────────────────
+        function setBg(dateStr) {
+            const seed = dateStr.replace(/-/g, '');
+            document.getElementById('bg').style.backgroundImage =
+                `url(https://picsum.photos/seed/${seed}/1920/1080)`;
+        }
+
+        // ── Particles ────────────────────────────────────────────────────────
+        function spawnParticle() {
+            const el = document.createElement('div');
+            el.className = 'particle';
+            el.textContent = PARTICLES[Math.floor(Math.random() * PARTICLES.length)];
+            el.style.cssText = [
+                `left:${Math.random()*100}vw`,
+                `font-size:${0.9 + Math.random()*1.2}rem`,
+                `animation-duration:${7 + Math.random()*9}s`,
+                `animation-delay:${Math.random()*4}s`
+            ].join(';');
+            document.getElementById('particles').appendChild(el);
+            setTimeout(() => el.remove(), 20000);
+        }
+
+        for (let i = 0; i < 10; i++) setTimeout(spawnParticle, i * 600);
+        setInterval(() => spawnParticle(), 2500);
+
+        // ── Storage ──────────────────────────────────────────────────────────
+        const getKey  = ()       => localStorage.getItem('mia_api_key');
+        const saveKey = k        => localStorage.setItem('mia_api_key', k);
+        const getAff  = dateStr  => localStorage.getItem(`mia_aff_${dateStr}`);
+        const saveAff = (ds, t)  => localStorage.setItem(`mia_aff_${ds}`, t);
+
+        // ── State ────────────────────────────────────────────────────────────
+        const today = new Date(); today.setHours(0,0,0,0);
+        let current  = new Date(today);
+
+        // ── Claude API call ───────────────────────────────────────────────────
+        async function fetchAffirmation(dateStr, apiKey) {
+            const res = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'x-api-key': apiKey,
+                    'anthropic-version': '2023-06-01',
+                    'content-type': 'application/json',
+                    'anthropic-dangerous-direct-browser-access': 'true'
+                },
+                body: JSON.stringify({
+                    model: 'claude-haiku-4-5-20251001',
+                    max_tokens: 300,
+                    system: 'Du skriver vakre, personlige bekreftelser på norsk. Skriv KUN selve setningen – ingen anførselstegn, ingen forklaring, ingen ekstra tekst.',
+                    messages: [{
+                        role: 'user',
+                        content:
+`Dato: ${dateStr}
+
+Skriv én enkelt, vakker setning på norsk til Mia for denne datoen.
+Fakta om Mia: Hun er 21 år, glad og morsom jente. Hun elsker håndball, familien sin, venner, kjæresten Jon-André og å feste med gjengen.
+Tone: en blanding av varm/kjærlig og motiverende/energigivende – noe som hjelper henne å takle dagen på en fin måte.
+Varier lengde og tema fra dag til dag basert på datoen.
+Skriv KUN setningen. Ingen anførselstegn.`
+                    }]
+                })
+            });
+
+            if (!res.ok) {
+                const e = await res.json().catch(() => ({}));
+                throw new Error(e?.error?.message || `HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+            return data.content[0].text.trim().replace(/^["«»""]|["«»""]$/g, '');
+        }
+
+        // ── Render helpers ───────────────────────────────────────────────────
+        const card = () => document.getElementById('mainCard');
+
+        function renderSetup() {
+            card().innerHTML = `
+                <div class="setup-screen">
+                    <h2>🔑 Koble til AI</h2>
+                    <p>For å generere Mias daglige setninger trenger vi en Claude API-nøkkel.<br>
+                       Den lagres kun i din nettleser og sendes aldri andre steder.</p>
+                    <input class="api-input" type="password" id="apiInput" placeholder="sk-ant-api03-…" />
+                    <button class="btn-primary" id="connectBtn">Koble til ✨</button>
+                </div>`;
+
+            document.getElementById('connectBtn').onclick = () => {
+                const k = document.getElementById('apiInput').value.trim();
+                if (!k.startsWith('sk-ant-')) {
+                    alert('Ugyldig nøkkel – den skal starte med sk-ant-');
+                    return;
+                }
+                saveKey(k);
+                render();
+            };
+        }
+
+        async function render() {
+            if (!getKey()) { renderSetup(); return; }
+
+            const dateStr = toISO(current);
+            const isToday = dateStr === toISO(today);
+
+            setBg(dateStr);
+
+            card().innerHTML = `
+                <div class="date-nav">
+                    <button class="nav-btn" id="prevBtn">&#8592;</button>
+                    <div class="date-center">
+                        <span class="date-display" id="dateDisplay">${fmtDate(current)}</span>
+                        <input type="date" id="datePicker" value="${dateStr}" />
+                        <br>
+                        <button class="today-btn" id="todayBtn" style="${isToday?'display:none':'display:inline'}">
+                            ↩ Gå til i dag
+                        </button>
+                    </div>
+                    <button class="nav-btn" id="nextBtn">&#8594;</button>
+                </div>
+                <div class="divider"></div>
+                <div class="affirmation-wrapper" id="affWrapper">
+                    <div class="loading">
+                        <div class="loading-dots"><span></span><span></span><span></span></div>
+                        <span class="loading-text">Henter dagens ord til deg…</span>
+                    </div>
+                </div>`;
+
+            // Wire date nav
+            document.getElementById('prevBtn').onclick = () => { current.setDate(current.getDate()-1); render(); };
+            document.getElementById('nextBtn').onclick = () => { current.setDate(current.getDate()+1); render(); };
+            document.getElementById('todayBtn').onclick = () => { current = new Date(today); render(); };
+
+            const display = document.getElementById('dateDisplay');
+            const picker  = document.getElementById('datePicker');
+
+            display.onclick = () => {
+                display.style.display = 'none';
+                picker.style.display  = 'inline-block';
+                picker.focus();
+            };
+            picker.onchange = () => {
+                current = fromISO(picker.value);
+                picker.style.display  = 'none';
+                display.style.display = 'inline-block';
+                render();
+            };
+            picker.onblur = () => {
+                picker.style.display  = 'none';
+                display.style.display = 'inline-block';
+            };
+
+            // Fetch affirmation
+            let text = getAff(dateStr);
+
+            if (!text) {
+                try {
+                    text = await fetchAffirmation(dateStr, getKey());
+                    saveAff(dateStr, text);
+                } catch (err) {
+                    document.getElementById('affWrapper').innerHTML = `
+                        <div class="error-box">
+                            <div class="error-icon">⚠️</div>
+                            <div>Kunne ikke hente dagens setning</div>
+                            <div class="error-msg">${err.message}</div>
+                            <button class="btn-small" id="retryBtn">Prøv igjen</button>
+                        </div>`;
+                    document.getElementById('retryBtn').onclick = render;
+                    return;
+                }
+            }
+
+            document.getElementById('affWrapper').innerHTML = `
+                <p class="affirmation" id="affText">
+                    <span class="quote-mark">"</span>${text}"
+                </p>`;
+
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    const el = document.getElementById('affText');
+                    if (el) el.classList.add('visible');
+                }, 80);
+            });
+        }
+
+        // ── Settings ─────────────────────────────────────────────────────────
+        document.getElementById('settingsBtn').onclick = () => {
+            if (confirm('Vil du endre API-nøkkelen?')) {
+                localStorage.removeItem('mia_api_key');
+                renderSetup();
+            }
+        };
+
+        // ── Boot ─────────────────────────────────────────────────────────────
+        setBg(toISO(current));
+        render();
+    })();
+    </script>
+</body>
+</html>
